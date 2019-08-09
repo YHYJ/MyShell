@@ -1,8 +1,0 @@
-#!/bin/bash
-
-
-say() {
-local IFS=+;
-/usr/bin/mplayer -ao alsa -really-quiet -noconsolecontrols "http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&spd=5&text=$*" > /dev/null 2>&1;
-}
-say $*
