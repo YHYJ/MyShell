@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+: <<!
+File: converter.sh
+Author: YJ
+Email: yj1516268@outlook.com
+Created Time: 2019-09-25 15:23:17
+
+Description: 
+!
+
+pyc_path='./pyc'
+py_path='./py'
+
+
+pyc_files=$(ls $pyc_path)
+for pyc_file in $pyc_files ; do
+  name=$(basename "$pyc_file" '.pyc')
+  uncompyle6 "$pyc_path/$pyc_file" > "$py_path/$name.py"
+done
