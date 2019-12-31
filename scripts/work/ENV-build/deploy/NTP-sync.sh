@@ -42,7 +42,7 @@ if echo -e "# Effect: 时间同步; Author: YJ\n* * */1 * * $path$cmd $server" >
     crontab -l
     echo
     echo "[Info]: 正在手动进行一次同步..."
-    
+
     if ntpdate $server; then
       echo
       echo -e "[Info]: 当前时间:\\n$(date)"
