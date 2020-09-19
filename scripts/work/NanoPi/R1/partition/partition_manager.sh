@@ -94,7 +94,7 @@ function emmcFormat() {
     mkfs.ext4 /dev/mmcblk1p1 # TODO
     printf '\n%s\n' "正在配置fstab"
     echo '/dev/mmcblk1p1    /data ext4 defaults 0 0' >>/etc/fstab
-    printf '\n%s\n' "OK"
+    printf '\n%s\n' "OK，请重启系统！"
   else
     printf '%s\n' "没有该磁盘"
   fi
