@@ -119,4 +119,7 @@ case $1 in
 -h | --help)
   helpInfo
   ;;
+*)
+  helpInfo
+  ;;
 esac
