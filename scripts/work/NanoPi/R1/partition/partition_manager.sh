@@ -78,9 +78,9 @@ function helpInfo() {
 #------------------------- Feature Function
 function diskInfo() {
   # 筛选磁盘设备
-  printf '%-16s%s\n' "Disk Name" "Disk Size"
+  printf '%-20s%s\n' "Disk Name" "Disk Size"
   for device in $dev_dict; do
-    printf '%-16s%s\n' "$device" "$(echo "$devices" | jq --arg dev "$device" -r '.blockdevices[] | select(.name == $dev) | .size')"
+    printf '%-20s%s\n' "$device" "$(echo "$devices" | jq --arg dev "$device" -r '.blockdevices[] | select(.name == $dev) | .size')"
   done
 }
 
