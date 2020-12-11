@@ -25,6 +25,11 @@ readonly name=$(basename "$0")
 #------------------------- Parameter Variable
 # description variable
 readonly desc="用来配置Docker Root Dir"
+# path variable
+readonly image_path="./image"
+readonly uncompress_path="./cache"
+readonly compress_name=$(ls "$image_path")
+readonly backup_path="/usr/mabo/resource/docker"
 
 ####################################################################
 #+++++++++++++++++++++++++ Define Function ++++++++++++++++++++++++#
@@ -41,16 +46,17 @@ function helpInfo() {
   echo -e "Options:"
   echo -e "     -d, --display     仅显示新的docker.service内容"
   echo -e "     -c, --config      将新的docker.service写入配置文件"
+  echo -e "     -l, --load        导入$image_path中的image文件"
   echo -e ""
   echo -e "     -h, --help        显示帮助信息"
 }
 
 #------------------------- Feature Function
-function sevInfo() {
+function serviceInfo() {
   cat "./override.conf"
 }
 
-function sevConfig() {
+function serviceConfig() {
   printf '\n%s\n' "正在配置docker.service"
   if [[ -d "/etc/systemd/system/docker.service.d" ]]; then
     cat "./override.conf" >"/etc/systemd/system/docker.service.d/override.conf"
@@ -61,7 +67,36 @@ function sevConfig() {
   printf '\n%s\n' "正在重启docker.service"
   systemctl daemon-reload
   systemctl restart docker
-  printf '\n%s\n' "OK"
+  printf '\n%s\n' "docker.service配置完成"
+}
+
+function loadImage() {
+  if [[ ! -d $uncompress_path ]]; then
+    mkdir $uncompress_path
+  fi
+
+  printf '\n%s\n' "正在解压image文件"
+  for file in $compress_name; do
+    bsdtar -xzvpf "$image_path/$file" -C "$uncompress_path"
+  done
+  printf '\n%s\n' "image文件解压完成"
+
+  printf '\n%s\n' "正在导入image"
+  readonly image_name=$(ls "$uncompress_path")
+  for image in $image_name; do
+    docker load -i "$uncompress_path/$image"
+  done
+  printf '\n%s\n' "image导入完成"
+
+  printf '\n'
+  docker images
+
+  rm -rf $uncompress_path
+}
+
+function backupImage() {
+  cp -r "$image_path" "$backup_path"
+  printf '\n%s\n' "image文件已备份到$backup_path/image"
 }
 
 ####################################################################
@@ -69,10 +104,14 @@ function sevConfig() {
 ####################################################################
 case $1 in
 -d | --display)
-  sevInfo
+  serviceInfo
   ;;
 -c | --config)
-  sevConfig
+  serviceConfig
+  ;;
+-l | --load)
+  loadImage
+  backupImage
   ;;
 -h | --help)
   helpInfo
