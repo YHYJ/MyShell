@@ -1,1 +1,1 @@
-- chkIP是放到server检测各个client联网状态的
+- ChkIP是放到server检测各个client联网状态的
