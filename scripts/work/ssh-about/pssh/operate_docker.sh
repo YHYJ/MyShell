@@ -30,12 +30,7 @@ readonly rel_version=1
 readonly normal=0           # 一切正常
 readonly err_file=1         # 文件/路径类错误
 readonly err_param=2        # 参数错误
-readonly err_fetch=48       # checkupdate错误
-readonly err_permission=110 # 权限错误
-readonly err_range=122      # 取值范围错误
-readonly err_ctrl_c=130     # 接收到INT(Ctrl+C)指令
 readonly err_unknown=255    # 未知错误
-readonly err_no_program=127 # 未找到命令
 
 #------------------------- Parameter Variable
 # description variable
@@ -68,10 +63,51 @@ function trim_redis() { # 清理redis
   docker exec redis redis-cli -n 1 XTRIM data_stream MAXLEN 5000
 }
 
+function check_doctopus() { # 检测Doctopus数采套件
+  # Doctopus数采套件的compose文件
+  compose_file_path='/usr/mabo/project/docker'
+  compose_files=$(find $compose_file_path -name 'docker-compose*.y*ml')
+  # 得到容器启动时间的字符串
+  chitu_startedat_str=$(docker inspect chitu --format '{{.State.StartedAt}}')
+  redis_startedat_str=$(docker inspect redis --format '{{.State.StartedAt}}')
+  # 得到容器启动时间的时间戳
+  chitu_startedat_ts=$(date -d "$chitu_startedat_str" +%s)
+  redis_startedat_ts=$(date -d "$redis_startedat_str" +%s)
+  # 得到时间戳差值的绝对值
+  diff=$((chitu_startedat_ts - redis_startedat_ts))
+  diff_abs=${diff##*[+-]}
+  # 临界值
+  critical=600
+
+  # 当指定的两个容器的启动时间的差值的绝对值大于临界值，重启容器
+  if [[ $diff_abs -gt $critical ]]; then
+    echo -e '>>> Restarting Doctopus ...'
+    # 是否存在compose文件
+    if [[ $compose_files ]]; then
+      # 停止每个compose文件
+      for compose_file in $compose_files; do
+        docker-compose -f "$compose_file" down
+      done
+      # 清理volume
+      docker volume prune -f
+      # 启动每个compose文件
+      for compose_file in $compose_files; do
+        docker-compose -f "$compose_file" up -d
+      done
+    else
+      echo -e "No compose file"
+      exit $err_file
+    fi
+  else
+    echo -e 'Do nothing'
+    exit $normal
+  fi
+}
+
 ####################################################################
 #++++++++++++++++++++++++++++++ Main ++++++++++++++++++++++++++++++#
 ####################################################################
-TEMP=$(getopt --options ":r:lhv" --longoptions "sync:list,help,version" -n "$name" -- "$@")
+TEMP=$(getopt --options ":r:lhv" --longoptions "run:list,help,version" -n "$name" -- "$@")
 eval set -- "$TEMP"
 
 funcs=$(grep '^function' "$0")
