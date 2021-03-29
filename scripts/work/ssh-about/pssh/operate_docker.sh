@@ -34,7 +34,7 @@ readonly err_unknown=255    # 未知错误
 
 #------------------------- Parameter Variable
 # description variable
-readonly desc='用于生成涉及docker的命令'
+readonly desc='用于执行涉及docker的命令'
 
 ####################################################################
 #+++++++++++++++++++++++++ Define Function ++++++++++++++++++++++++#
@@ -46,10 +46,12 @@ function helpInfo() { # 打印帮助信息
   echo -e "--------------------------------------------------"
   echo -e "Usage:"
   echo -e ""
-  echo -e "     $name [OPTION]"
+  echo -e "     $name [OPTION] ..."
   echo -e ""
   echo -e "Options:"
   echo -e ""
+  echo -e "     -l, --list        列出可用函数"
+  echo -e "     -r, --run         运行指定函数"
   echo -e "     -h, --help        显示帮助信息"
   echo -e "     -v, --version     显示版本信息"
 }
@@ -79,7 +81,7 @@ function check_doctopus() { # 检测Doctopus数采套件
   # 临界值
   critical=600
 
-  # 当指定的两个容器的启动时间的差值的绝对值大于临界值，重启容器
+  # 当指定的两个容器的启动时间差值的绝对值大于临界值，重启容器
   if [[ $diff_abs -gt $critical ]]; then
     echo -e '>>> Restarting Doctopus ...'
     # 是否存在compose文件
@@ -95,11 +97,11 @@ function check_doctopus() { # 检测Doctopus数采套件
         docker-compose -f "$compose_file" up -d
       done
     else
-      echo -e "No compose file"
+      echo -e "No compose file."
       exit $err_file
     fi
   else
-    echo -e 'Do nothing'
+    echo -e 'Nothing to do.'
     exit $normal
   fi
 }
