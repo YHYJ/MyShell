@@ -109,7 +109,7 @@ function check_doctopus() { # 检测Doctopus数采套件
 ####################################################################
 #++++++++++++++++++++++++++++++ Main ++++++++++++++++++++++++++++++#
 ####################################################################
-TEMP=$(getopt --options ":r:lhv" --longoptions "run:list,help,version" -n "$name" -- "$@")
+TEMP=$(getopt --options "r:lhv" --longoptions "run:,list,help,version" -n "$name" -- "$@")
 eval set -- "$TEMP"
 
 funcs=$(grep '^function' "$0")
