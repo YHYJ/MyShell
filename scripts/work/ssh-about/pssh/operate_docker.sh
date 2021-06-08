@@ -27,10 +27,10 @@ readonly minor_version=20210326
 readonly rel_version=1
 
 #------------------------- Exit Code Variable
-readonly normal=0           # 一切正常
-readonly err_file=1         # 文件/路径类错误
-readonly err_param=2        # 参数错误
-readonly err_unknown=255    # 未知错误
+readonly normal=0        # 一切正常
+readonly err_file=1      # 文件/路径类错误
+readonly err_param=2     # 参数错误
+readonly err_unknown=255 # 未知错误
 
 #------------------------- Parameter Variable
 # description variable
@@ -65,6 +65,31 @@ function trim_redis() { # 清理redis
   docker exec redis redis-cli -n 1 XTRIM data_stream MAXLEN 5000
 }
 
+function restart_containers() { # 重启所有数采容器
+  # 数采套件的compose文件
+  compose_file_path='/usr/mabo/project/docker'
+  compose_files=$(find $compose_file_path -name 'docker-compose*.y*ml')
+
+  echo -e '>>> Restarting Doctopus ...'
+  # 是否存在compose文件
+  if [[ $compose_files ]]; then
+    # 停止每个compose文件
+    for compose_file in $compose_files; do
+      docker-compose -f "$compose_file" down
+    done
+    # 清理垃圾
+    docker system prune -f
+    docker volume prune -f
+    # 启动每个compose文件
+    for compose_file in $compose_files; do
+      docker-compose -f "$compose_file" up -d
+    done
+  else
+    echo -e "No compose file."
+    exit $err_file
+  fi
+}
+
 function check_doctopus() { # 检测Doctopus数采套件
   # Doctopus数采套件的compose文件
   compose_file_path='/usr/mabo/project/docker'
@@ -90,7 +115,8 @@ function check_doctopus() { # 检测Doctopus数采套件
       for compose_file in $compose_files; do
         docker-compose -f "$compose_file" down
       done
-      # 清理volume
+      # 清理垃圾
+      docker system prune -f
       docker volume prune -f
       # 启动每个compose文件
       for compose_file in $compose_files; do
