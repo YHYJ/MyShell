@@ -20,10 +20,11 @@ Depends:
 ####################################################################
 #------------------------- Program Variable
 # program name
-readonly name=$(basename "$0")
+name=$(basename "$0")
+readonly name
 # program version
-readonly major_version=0.1
-readonly minor_version=20210326
+readonly major_version=0.2
+readonly minor_version=20210608
 readonly rel_version=1
 
 #------------------------- Exit Code Variable
