@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-: <<!
+: << !
 Name: partition_manager.sh
 Author: YJ
 Email: yj1516268@outlook.com
@@ -29,31 +29,27 @@ Depends:
 ####################################################################
 #------------------------- Program Variable
 # program name
-readonly name=$(basename "$0")
+name=$(basename "$0")
+readonly name
 
 #------------------------- Exit Code Variable
-readonly normal=0           # 一切正常
-readonly err_file=1         # 文件/路径类错误
-readonly err_param=2        # 参数错误
-readonly err_fetch=48       # checkupdate错误
-readonly err_permission=110 # 权限错误
-readonly err_range=122      # 取值范围错误
-readonly err_ctrl_c=130     # 接收到INT(Ctrl+C)指令
-readonly err_unknown=255    # 未知错误
-readonly err_no_program=127 # 未找到命令
+readonly normal=0        # 一切正常
+readonly err_file=1      # 文件/路径类错误
+readonly err_param=2     # 参数错误
+readonly err_unknown=255 # 未知错误
 
 #------------------------- Parameter Variable
 # description variable
 readonly desc="对指定磁盘进行分区"
 # 分区工具
 readonly part_tool='sfdisk'
-# 磁盘地址
-readonly disk_path='/dev'
 # 分区类型
 readonly part_type='ext4'
 # 磁盘信息
-readonly devices=$(lsblk -Jplno NAME,TYPE,SIZE,MOUNTPOINT,STATE)
-readonly dev_dict=$(echo "$devices" | jq -r '.blockdevices[] | select(.type == "disk") | select(.mountpoint == null) | .name')
+devices=$(lsblk -Jplno NAME,TYPE,SIZE,MOUNTPOINT,STATE)
+readonly devices
+dev_dict=$(echo "$devices" | jq -r '.blockdevices[] | select(.type == "disk") | select(.mountpoint == null) | .name')
+readonly dev_dict
 
 ####################################################################
 #+++++++++++++++++++++++++ Define Function ++++++++++++++++++++++++#
@@ -68,11 +64,13 @@ function helpInfo() {
   echo -e "     $name [OPTION]"
   echo -e ""
   echo -e "Options:"
-  echo -e "     -i, --info        仅显示磁盘信息而不写入（默认）"
-  echo -e "     -f, --format      使用默认参数配置NanoPi-R1的eMMC"
+  echo -e "     -i, --info              仅显示磁盘信息而不写入（默认）"
+  echo -e "     -f, --format <DiskName> 使用默认参数配置NanoPi-R1指定的eMMC"
   echo -e ""
-  echo -e "     -h, --help        显示帮助信息"
-  echo -e "     -v, --version     显示版本信息"
+  echo -e "     -h, --help              显示帮助信息"
+  echo -e ""
+  echo -e "ARG:"
+  echo -e "     <DiskName>              磁盘设备名（例如/dev/sda），不写则要求输入"
 }
 
 #------------------------- Feature Function
@@ -86,22 +84,40 @@ function diskInfo() {
 
 function emmcFormat() {
   printf '\n'
-  read -e -r -p "请输入要配置的磁盘名(Disk Name)："
-  if [[ $dev_dict =~ $REPLY ]]; then
-    printf '\n%s\n' "正在分区"
-    sfdisk "$REPLY" <./eMMC_Partition-Table # TODO
-    printf '\n%s\n' "正在格式化"
-    mkfs.ext4 /dev/mmcblk1p1 # TODO
-    printf '\n%s\n' "正在配置fstab"
-    echo '/dev/mmcblk1p1    /data ext4 defaults 0 0' >>/etc/fstab
-    printf '\n%s\n' "OK，请重启系统！"
-  else
-    printf '%s\n' "没有该磁盘"
-  fi
-}
 
-function info() {
-  diskInfo
+  # 判断是否指定了'--disk'参数且长度符合（最少是'/dev/'，所以阈值是5），否则要求输入
+  if [[ ${#1} -gt 5 ]]; then
+    if [[ $dev_dict =~ $1 ]]; then
+      target_dev=$1
+    else
+      printf '%s\n' "没有磁盘$1，请重新输入"
+      read -e -r -p "请输入要配置的磁盘名(Disk Name)："
+      if [[ $dev_dict =~ $REPLY ]]; then
+        target_dev=$REPLY
+      else
+        printf '%s\n' "没有磁盘$REPLY"
+        exit $err_file
+      fi
+    fi
+  else
+    printf '%s\n' "没有磁盘$1，请重新输入"
+    read -e -r -p "请输入要配置的磁盘名(Disk Name)："
+    if [[ $dev_dict =~ $REPLY ]]; then
+      target_dev=$REPLY
+    else
+      printf '%s\n' "没有磁盘$REPLY"
+      exit $err_file
+    fi
+  fi
+
+  # 开始分区
+  printf '\n%s\n' "正在分区"
+  $part_tool "$target_dev" < ./eMMC_Partition-Table
+  printf '\n%s\n' "正在格式化"
+  mkfs.$part_type "$target_dev"p1
+  printf '\n%s\n' "正在配置fstab"
+  echo "$target_dev"'p1    /data ext4 defaults 0 0' >> /etc/fstab
+  printf '\n%s\n' "OK，请重启系统！"
 }
 
 ####################################################################
@@ -109,18 +125,40 @@ function info() {
 ####################################################################
 echo -e "Running \\e[01;32m$name\\e[0m ...\n"
 
-case $1 in
--i | --info)
-  info
-  ;;
--f | --format)
-  info
-  emmcFormat
-  ;;
--h | --help)
+TEMP=$(getopt --options "f::hi" --longoptions "format::,help,info" -n "$name" -- "$@")
+eval set -- "$TEMP"
+
+if [[ ${#@} -lt 2 ]]; then
   helpInfo
-  ;;
-*)
-  helpInfo
-  ;;
-esac
+  exit $err_param
+else
+  while true; do
+    case $1 in
+      -i | --info)
+        diskInfo
+        exit $normal
+        ;;
+      -f | --format)
+        case $2 in
+          *)
+            diskInfo
+            emmcFormat "$2"
+            exit $normal
+            ;;
+        esac
+        ;;
+      -h | --help)
+        helpInfo
+        exit $normal
+        ;;
+      --)
+        shift 1
+        break
+        ;;
+      *)
+        helpInfo
+        exit $err_unknown
+        ;;
+    esac
+  done
+fi
