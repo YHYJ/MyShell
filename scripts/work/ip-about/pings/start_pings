@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+: << !
+Name: start_pings
+Author: YJ
+Email: yj1516268@outlook.com
+Created Time: 2021-08-09 09:20:53
+
+Description:
+
+Attentions:
+-
+
+Depends:
+-
+!
+
+./pings.sh < edge_ip.list

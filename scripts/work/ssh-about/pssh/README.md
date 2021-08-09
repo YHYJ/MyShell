@@ -32,14 +32,14 @@
 
 ### 批量传输文件
 
-使用命令`psshscp -h edge_ip_geely.list -l [USER] [Local File] [Remote Path]`将本地文件'[Local File]'拷贝到'edge_ip_geely.list'中列出的每个设备上的'[Remote Path]'路径
+使用命令`psshscp -h edge_ip.list -l [USER] [Local File] [Remote Path]`将本地文件'[Local File]'拷贝到'edge_ip.list'中列出的每个设备上的'[Remote Path]'路径
 
 其中参数含义为：
 
 -h：指定中间机的hostname或ip
 -l：指定登录每个中间机用的用户名
 
-'edge_ip_geely.list'格式为：
+'edge_ip.list'格式为：
 
 ```shell
 127.0.0.1
@@ -48,7 +48,7 @@
 
 ### 批量执行命令
 
-使用命令`pssh -h edge_ip_geely.list -l [USER] -i [CMD]`在文件'edge_ip_geely.list'中列出的每个设备上执行'CMD'
+使用命令`pssh -h edge_ip.list -l [USER] -i [CMD]`在文件'edge_ip.list'中列出的每个设备上执行'CMD'
 
 其中参数含义为：
 
@@ -56,7 +56,7 @@
 -l：指定登录每个中间机用的用户名
 -i：指定要在每个中间机上执行的命令
 
-'edge_ip_geely.list'格式为：
+'edge_ip.list'格式为：
 
 ```shell
 127.0.0.1
