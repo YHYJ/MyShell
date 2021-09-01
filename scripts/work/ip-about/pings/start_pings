@@ -15,4 +15,4 @@ Depends:
 -
 !
 
-./pings.sh < edge_ip.list
+./pings.sh < /Path/to/edge_ip.list
